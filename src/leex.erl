@@ -1269,9 +1269,36 @@ open_inc_file(State) ->
         Error -> {Error,Ifile}
     end.
 
+%% try the application lib dir
+lib_inc_file(Filename) ->
+    case code:lib_dir(?LEEXLIB) of
+        Path when is_list(Path) -> filename:join(filename:join(Path, "include"), Filename);
+        {error, bad_name} -> undefined
+    end.
+
+%% try the leex path in the env var
+env_inc_file(Filename) ->
+    case os:getenv("LEEX_PATH") of
+        Path when is_list(Path) -> filename:join(filename:join(Path, "include"), Filename);
+        false -> undefined
+    end.
+
+find_inc_file(Filename) ->
+    Filepath = env_inc_file(Filename),
+    case (is_list(Filepath) andalso filelib:is_file(Filepath)) of
+        true -> Filepath;
+        false -> find_inc_file1(Filename)
+    end.
+
+find_inc_file1(Filename) ->
+    Filepath = lib_inc_file(Filename),
+    case (is_list(Filepath) andalso filelib:is_file(Filepath)) of
+        true -> Filepath;
+        false -> exit({include_not_found, lists:flatten(io_lib:format("Couldn't find the include file ~s. Try setting the LEEX_PATH env var.", [Filename]))})
+    end.
+
 inc_file_name([]) ->
-    Incdir = filename:join(code:lib_dir(?LEEXLIB), "include"),
-    filename:join(Incdir, ?LEEXINC);
+    find_inc_file(?LEEXINC);
 inc_file_name(Filename) ->
     Filename.
                     
