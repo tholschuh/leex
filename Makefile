@@ -5,14 +5,21 @@ DOC_DIR=doc
 
 #ERLC_FLAGS=-W0 -Ddebug +debug_info
 ERLC_FLAGS=-W
-ERLC=erlc -I $(INCLUDE_DIR) -o $(EBIN_DIR) $(ERLC_FLAGS) $(SOURCE_DIR)
+ERLC=erlc -I $(INCLUDE_DIR) -o $(EBIN_DIR) $(ERLC_FLAGS)
 ERL=erl -I -pa ebin -noshell -eval
+
+ERLS=$(wildcard $(SOURCE_DIR)/*.erl)
+BEAMS=$(ERLS:$(SOURCE_DIR)/%.erl=$(EBIN_DIR)/%.beam)
 
 all: compile docs
 
-compile:
+compile: $(EBIN_DIR) ${BEAMS}
+
+$(EBIN_DIR):
 	mkdir -p $(EBIN_DIR)
-	$(ERLC)/*.erl
+
+$(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl
+	$(ERLC) $<
 
 docs:
 	$(ERL) -noshell -run edoc file $(SOURCE_DIR)/leex.erl -run init stop
