@@ -1,1 +1,4 @@
-{application, leex, []}.
+{application, leex, 
+ [{vsn, "0.5"},
+  {modules, [leex]}
+ ]}.
